@@ -44,7 +44,7 @@ fi
 if confirm "Do you want to you want to install ProtonVPN?"; then
     echo "Installing ProtonVPN..."
         git clone https://github.com/Spaghettio73/proton
-        sudo cp -R "$DIR"/proton/* /.config
+        sudo cp -R "$DIR" proton/* .config
         sudo wget https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb || log_error "Failed to wget protonvpn .deb file."
         sudo dpkg -i ./protonvpn-stable-release_1.0.4_all.deb && sudo apt update || log_error "Failed to dpkg the .deb."
         sudo apt install proton-vpn-gnome-desktop -y || log_error "Failed to install ProtonVPN."
