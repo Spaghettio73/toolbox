@@ -49,7 +49,7 @@ fi
 if confirm "Do you want to configure Unbound for recursive DNS resolution?"; then
     echo "Configuring Unbound..."
     cat <<EOF > /etc/unbound/unbound.conf.d/pi-hole.conf
-server:
+ server:
     # If no logfile is specified, syslog is used
     # logfile: "/var/log/unbound/unbound.log"
     verbosity: 0
