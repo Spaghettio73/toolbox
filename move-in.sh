@@ -55,7 +55,7 @@ fi
 if confirm "Do you want to you want to install BiglyBT?"; then
     echo "Installing BiglyBT..."
         git clone https://github.com/Spaghettio73/biglybt
-        sudo cp -R /home/main/biglybt/* /home/main/.biglybt/*
+        sudo cp -R /home/main/biglybt/* /home/main/*
         sudo curl -O https://files.biglybt.com/installer/BiglyBT_Installer.sh || log_error "Failed to curl BiglyBT install file."
         sudo sh ./BigltBT_Installer.sh || log_error "Failed to install BiglyBT."
         sudo apt update && sudo apt upgrade -y || log_error "Failed to update and or upgrade."
