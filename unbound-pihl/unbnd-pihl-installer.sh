@@ -167,5 +167,6 @@ apt update && apt upgrade -y
 EOF
     chmod +x /usr/local/bin/update_pihole
 fi
+fi 
 
 echo "Installation script completed. Check $LOG_FILE for any errors."
