@@ -36,21 +36,9 @@ fi
 # Install dependencies
 if confirm "Do you want to install necessary must-haves?"; then
     echo "Installing must-haves..."
-    while read -r p ; do sudo apt-get install -y $p ; done < <(cat << "EOF"
-    perl
-    zip unzip
-    exuberant-ctags
-    mutt
-    libxml-atom-perl
-    postgresql-9.6
-    libdbd-pgsql
-    curl
-    wget
-    libwww-curl-perl
-    tig
-EOF
-) || log_error "Failed to install dependenciesmust-haves."
+    apt install -y curl wget perl mutt  || log_error "Failed to install must-haves."
 fi
+
 
 # Install ProtonVPN
 if confirm "Do you want to you want to install ProtonVPN?"; then
