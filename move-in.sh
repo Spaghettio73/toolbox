@@ -44,7 +44,7 @@ fi
 if confirm "Do you want to you want to install ProtonVPN?"; then
     echo "Installing ProtonVPN..."
         git clone https://github.com/Spaghettio73/proton
-        sudo cp -R "$DIR" proton/* .config
+        sudo cp -R proton/* .config/*
         sudo wget https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb || log_error "Failed to wget protonvpn .deb file."
         sudo dpkg -i ./protonvpn-stable-release_1.0.4_all.deb && sudo apt update || log_error "Failed to dpkg the .deb."
         sudo apt install proton-vpn-gnome-desktop -y || log_error "Failed to install ProtonVPN."
@@ -55,7 +55,7 @@ fi
 if confirm "Do you want to you want to install BiglyBT?"; then
     echo "Installing BiglyBT..."
         git clone https://github.com/Spaghettio73/biglybt
-        sudo cp -R "$DIR"/biglybt/* /.biglybt
+        sudo cp -R biglybt/* .biglybt/*
         sudo curl -O https://files.biglybt.com/installer/BiglyBT_Installer.sh || log_error "Failed to curl BiglyBT install file."
         sudo sh ./BigltBT_Installer.sh || log_error "Failed to install BiglyBT."
         sudo apt update && sudo apt upgrade -y || log_error "Failed to update and or upgrade."
