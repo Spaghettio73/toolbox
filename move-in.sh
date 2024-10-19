@@ -54,7 +54,7 @@ fi
 # Install BiglyBT 
 if confirm "Do you want to you want to install BiglyBT?"; then
     echo "Installing BiglyBT..."
-        #git clone https://github.com/Spaghettio73/biglybt
+        git clone https://github.com/Spaghettio73/biglybt
         #sudo cp -R /home/main/biglybt/.biglybt /home/main/.biglybt
         #sudo curl -O https://files.biglybt.com/installer/BiglyBT_Installer.sh || log_error "Failed to curl BiglyBT install file."
         sudo sh biglybt/BiglyBT_Installer.sh || log_error "Failed to install BiglyBT."
