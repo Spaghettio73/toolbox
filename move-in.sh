@@ -2,7 +2,17 @@
 set -e  # Exit immediately if a command exits with a non-zero status
 
 LOG_FILE="/var/log/move-in.log"
+VERBOSE_LOG_DIR="$HOME/Desktop/Install_Logs"
+PROTON_LOG="$VERBOSE_LOG_DIR/protonvpn.log"
+BIGLYBT_LOG="$VERBOSE_LOG_DIR/biglybt.log"
+
+# Ensure the log file is writable
+mkdir -p /var/log
+touch "$LOG_FILE"
 > "$LOG_FILE" # Clear log file
+
+# Create verbose log directory
+mkdir -p "$VERBOSE_LOG_DIR"
 
 # Function to log errors
 log_error() {
@@ -11,7 +21,7 @@ log_error() {
 
 # Check for appropriate elevated privileges
 if [ "$EUID" -ne 0 ]; then
-    echo "Please run as root or use sudo."
+    echo "Please run as root or use sudo." | tee -a "$LOG_FILE"
     exit 1
 fi
 
@@ -27,41 +37,57 @@ confirm() {
     done
 }
 
+# Function to run commands and log errors
+run_command() {
+    "$@" >> "$LOG_FILE" 2>&1 || log_error "Command failed: $*"
+}
+
 # Update the system
 if confirm "Do you want to update system packages?"; then
     echo "Updating system packages..."
-    apt update && apt upgrade -y || log_error "Failed to update system packages."
+    run_command apt update
+    run_command apt upgrade -y
 fi
 
 # Install dependencies
 if confirm "Do you want to install necessary must-haves?"; then
     echo "Installing must-haves..."
-    apt install -y curl wget perl mutt  || log_error "Failed to install must-haves."
+    run_command apt install -y curl wget perl mutt
 fi
-
 
 # Install ProtonVPN
-if confirm "Do you want to you want to install ProtonVPN?"; then
+if confirm "Do you want to install ProtonVPN?"; then
     echo "Installing ProtonVPN..."
-        git clone https://github.com/Spaghettio73/proton
-        sudo cp -R /home/main/proton/* /home/main/.config/*
-        sudo wget https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb || log_error "Failed to wget protonvpn .deb file."
-        sudo dpkg -i ./protonvpn-stable-release_1.0.4_all.deb && sudo apt update || log_error "Failed to dpkg the .deb."
-        sudo apt install proton-vpn-gnome-desktop -y || log_error "Failed to install ProtonVPN."
-        sudo apt update && sudo apt upgrade -y || log_error "Failed to update and or upgrade."
+    run_command git clone https://github.com/Spaghettio73/proton
+    run_command cp -R /home/main/proton/* /home/main/.config/*
+    run_command wget https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb
+    run_command dpkg -i ./protonvpn-stable-release_1.0.4_all.deb
+    run_command apt update
+    run_command apt install proton-vpn-gnome-desktop -y
+    
+    # Start ProtonVPN and check status
+    run_command protonvpn-cli connect --fastest
+    sleep 5  # Wait for the connection to stabilize
+    STATUS=$(protonvpn-cli status)
+    if [[ $STATUS == *"Connected"* ]]; then
+        echo "ProtonVPN is connected." >> "$LOG_FILE"
+    else
+        log_error "ProtonVPN failed to connect. Status: $STATUS"
+    fi
 fi
 
-# Install BiglyBT 
-if confirm "Do you want to you want to install BiglyBT?"; then
+# Install BiglyBT
+if confirm "Do you want to install BiglyBT?"; then
     echo "Installing BiglyBT..."
-        git clone https://github.com/Spaghettio73/biglybt
-        #sudo cp -R /home/main/biglybt/.biglybt /home/main/.biglybt
-        #sudo curl -O https://files.biglybt.com/installer/BiglyBT_Installer.sh || log_error "Failed to curl BiglyBT install file."
-        sudo sh biglybt/BiglyBT_Installer.sh || log_error "Failed to install BiglyBT."
-        sudo apt update && sudo apt upgrade -y || log_error "Failed to update and or upgrade."
+    run_command git clone https://github.com/Spaghettio73/biglybt
+    run_command sh biglybt/BiglyBT_Installer.sh
+    
+    # Check installation
+    if ! command -v biglybt &> /dev/null; then
+        log_error "BiglyBT installation failed."
+    else
+        echo "BiglyBT installed successfully." >> "$LOG_FILE"
+    fi
 fi
 
 echo "Installation script completed. Check $LOG_FILE for any errors."
-
-
-
