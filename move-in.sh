@@ -52,7 +52,7 @@ fi
 # Install dependencies
 if confirm "Do you want to install necessary must-haves?"; then
     echo "Installing must-haves..."
-    run_command apt install -y curl wget perl mutt
+    run_command apt install -y curl wget perl mutt protonvpn-cli
 fi
 
 # Install ProtonVPN
@@ -64,8 +64,9 @@ if confirm "Do you want to install ProtonVPN?"; then
     run_command dpkg -i ./protonvpn-stable-release_1.0.4_all.deb
     run_command apt update
     run_command apt install proton-vpn-gnome-desktop -y
-    
+
     # Start ProtonVPN and check status
+    echo "Attempting to connect to ProtonVPN..." >> "$LOG_FILE"
     run_command protonvpn-cli connect --fastest
     sleep 5  # Wait for the connection to stabilize
     STATUS=$(protonvpn-cli status)
@@ -80,6 +81,7 @@ fi
 if confirm "Do you want to install BiglyBT?"; then
     echo "Installing BiglyBT..."
     run_command git clone https://github.com/Spaghettio73/biglybt
+    run_command chmod +x biglybt/BiglyBT_Installer.sh  # Make the installer executable
     run_command sh biglybt/BiglyBT_Installer.sh
     
     # Check installation
@@ -89,5 +91,8 @@ if confirm "Do you want to install BiglyBT?"; then
         echo "BiglyBT installed successfully." >> "$LOG_FILE"
     fi
 fi
+
+# Make the move-in script executable
+run_command chmod +x ./toolbox/move-in.sh
 
 echo "Installation script completed. Check $LOG_FILE for any errors."
