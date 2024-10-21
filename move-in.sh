@@ -2,26 +2,32 @@
 set -e  # Exit immediately if a command exits with a non-zero status
 
 LOG_FILE="/var/log/move-in.log"
-VERBOSE_LOG_DIR="$HOME/Desktop/Install_Logs"
-PROTON_LOG="$VERBOSE_LOG_DIR/protonvpn.log"
-BIGLYBT_LOG="$VERBOSE_LOG_DIR/biglybt.log"
-
-# Ensure the log file is writable
-mkdir -p /var/log
-touch "$LOG_FILE"
 > "$LOG_FILE" # Clear log file
-
-# Create verbose log directory
-mkdir -p "$VERBOSE_LOG_DIR"
 
 # Function to log errors
 log_error() {
     echo "[ERROR] $1" | tee -a "$LOG_FILE"
 }
 
+# Function to copy log files to desktop
+copy_logs_to_desktop() {
+    LOG_SOURCE="/var/log/move-in.log"
+    DESTINATION="$HOME/Desktop/move-in.log"
+
+    if cp "$LOG_SOURCE" "$DESTINATION"; then
+        echo "Log file copied to Desktop successfully."
+    else
+        log_error "Failed to copy log file to Desktop."
+    fi
+
+    # Copy other relevant log files (add any additional log files here)
+    # Example:
+    # cp /var/log/another-log-file.log "$HOME/Desktop/"
+}
+
 # Check for appropriate elevated privileges
 if [ "$EUID" -ne 0 ]; then
-    echo "Please run as root or use sudo." | tee -a "$LOG_FILE"
+    echo "Please run as root or use sudo."
     exit 1
 fi
 
@@ -37,62 +43,56 @@ confirm() {
     done
 }
 
-# Function to run commands and log errors
-run_command() {
-    "$@" >> "$LOG_FILE" 2>&1 || log_error "Command failed: $*"
-}
-
 # Update the system
 if confirm "Do you want to update system packages?"; then
     echo "Updating system packages..."
-    run_command apt update
-    run_command apt upgrade -y
+    apt update && apt upgrade -y || log_error "Failed to update system packages."
 fi
 
 # Install dependencies
 if confirm "Do you want to install necessary must-haves?"; then
     echo "Installing must-haves..."
-    run_command apt install -y curl wget perl mutt protonvpn-cli
+    apt install -y curl wget perl mutt || log_error "Failed to install must-haves."
 fi
 
 # Install ProtonVPN
 if confirm "Do you want to install ProtonVPN?"; then
     echo "Installing ProtonVPN..."
-    run_command git clone https://github.com/Spaghettio73/proton
-    run_command cp -R /home/main/proton/* /home/main/.config/*
-    run_command wget https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb
-    run_command dpkg -i ./protonvpn-stable-release_1.0.4_all.deb
-    run_command apt update
-    run_command apt install proton-vpn-gnome-desktop -y
+    git clone https://github.com/Spaghettio73/proton
+    sudo cp -R /home/main/proton/* /home/main/.config/*
+    sudo wget https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb || log_error "Failed to wget protonvpn .deb file."
+    sudo dpkg -i ./protonvpn-stable-release_1.0.4_all.deb && sudo apt update || log_error "Failed to dpkg the .deb."
+    sudo apt install proton-vpn-gnome-desktop -y || log_error "Failed to install ProtonVPN."
 
-    # Start ProtonVPN and check status
-    echo "Attempting to connect to ProtonVPN..." >> "$LOG_FILE"
-    run_command protonvpn-cli connect --fastest
-    sleep 5  # Wait for the connection to stabilize
-    STATUS=$(protonvpn-cli status)
-    if [[ $STATUS == *"Connected"* ]]; then
-        echo "ProtonVPN is connected." >> "$LOG_FILE"
-    else
-        log_error "ProtonVPN failed to connect. Status: $STATUS"
+    # Launch ProtonVPN
+    echo "Launching ProtonVPN..."
+    if ! protonvpn-app.desktop &; then
+        log_error "Failed to launch ProtonVPN. Please check your installation."
+        exit 1
     fi
+
+    # Optionally, wait for the app to start completely
+    sleep 5  # Adjust time as necessary
+
+    # Check if ProtonVPN is running
+    if ! pgrep -x "protonvpn" > /dev/null; then
+        log_error "ProtonVPN did not start successfully."
+        exit 1
+    fi
+
+    echo "ProtonVPN launched successfully."
+    # Optionally, add commands here to connect or configure ProtonVPN
 fi
 
-# Install BiglyBT
+# Install BiglyBT 
 if confirm "Do you want to install BiglyBT?"; then
     echo "Installing BiglyBT..."
-    run_command git clone https://github.com/Spaghettio73/biglybt
-    run_command chmod +x biglybt/BiglyBT_Installer.sh  # Make the installer executable
-    run_command sh biglybt/BiglyBT_Installer.sh
-    
-    # Check installation
-    if ! command -v biglybt &> /dev/null; then
-        log_error "BiglyBT installation failed."
-    else
-        echo "BiglyBT installed successfully." >> "$LOG_FILE"
-    fi
+    git clone https://github.com/Spaghettio73/biglybt
+    sudo sh biglybt/BiglyBT_Installer.sh || log_error "Failed to install BiglyBT."
+    sudo apt update && sudo apt upgrade -y || log_error "Failed to update and or upgrade."
 fi
 
-# Make the move-in script executable
-run_command chmod +x ./toolbox/move-in.sh
+# Copy logs to desktop
+copy_logs_to_desktop
 
 echo "Installation script completed. Check $LOG_FILE for any errors."
